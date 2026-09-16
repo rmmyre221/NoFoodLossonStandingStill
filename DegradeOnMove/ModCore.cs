@@ -1,18 +1,20 @@
-﻿using System.Reflection;
-using BepInEx;
+﻿using BepInEx;
 using BepInEx.Configuration;
+using BepInEx.Logging;
 using HarmonyLib;
 using ServerSync;
+using System.Reflection;
 
-namespace DegradeOnMove
+namespace NoFoodLoSS
 {
     [BepInPlugin(ModGUID, ModName, ModVersion)]
-    public class DegradeOnMoveMod : BaseUnityPlugin
+    public class NoFoodLoSSMod : BaseUnityPlugin
     {
-        private const string ModName = "Degrade On Move";
-        private const string ModVersion = "1.0.0";
-        private const string ModGUID = "come.littleroom.dev";
+        private const string ModName = "No Food Loss on Standing Still";
+        private const string ModVersion = "0.1.0";
+        private const string ModGUID = "VedaIanni.NoFoodLoSS.dev";
         private static Harmony harmony = null!;
+        public static ManualLogSource logger = BepInEx.Logging.Logger.CreateLogSource(ModName);
         ConfigSync configSync = new(ModGUID) 
             { DisplayName = ModName, CurrentVersion = ModVersion, MinimumRequiredVersion = ModVersion};
         internal static ConfigEntry<bool> ServerConfigLocked = null!;
