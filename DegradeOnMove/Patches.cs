@@ -38,15 +38,70 @@ namespace NoFoodLoSS
 
         public static float CheckPlayerMovementSetFood(float value)
         {
-            if (!NoFoodLoSSMod.UseMod.Value) return value;
-
-            if (Player.m_localPlayer.m_moveDir == Vector3.zero && Player.m_localPlayer.GetStamina() >= Player.m_localPlayer.GetMaxStamina())
+            if (!NoFoodLoSSMod.UseMod.Value)
             {
-                return 0f;
+                return value;
             }
-
-            return value;
+            return value * Math.Max(GenerateMultiplier() * RestedMultiplier(), NoFoodLoSSMod.MinimumHungerLoss.Value);
         }
-        
+        public static float GenerateMultiplier()
+        {
+            float multiplier = NoFoodLoSSMod.BaseHungerLoss.Value;
+            Player localPlayer = Player.m_localPlayer;
+            bool isMoving = ((Character)localPlayer).m_moveDir != Vector3.zero;
+            if (NoFoodLoSSMod.PartialLossMode.Value)
+            {
+                int num = 0;
+                if (NoFoodLoSSMod.RequireStandingStillInPartialMode.Value)
+                {
+                    if (isMoving)
+                    {
+                        return multiplier;
+                    }
+                }
+                else if (!isMoving)
+                {
+                    num += NoFoodLoSSMod.MovementWeight.Value;
+                }
+                if (localPlayer.GetHealth() >= localPlayer.GetMaxHealth())
+                {
+                    num += NoFoodLoSSMod.HealthWeight.Value;
+                }
+                if (localPlayer.GetStamina() >= localPlayer.GetMaxStamina())
+                {
+                    num += NoFoodLoSSMod.StaminaWeight.Value;
+                }
+                if (localPlayer.GetEitr() >= localPlayer.GetMaxEitr())
+                {
+                    num += NoFoodLoSSMod.EitrWeight.Value;
+                }
+                return multiplier * (1f - (float)num * NoFoodLoSSMod.CachedInverseTotalWeight);
+            }
+            if (NoFoodLoSSMod.CheckMovement.Value && isMoving)
+            {
+                return multiplier;
+            }
+            if (NoFoodLoSSMod.CheckHealth.Value && localPlayer.GetHealth() < localPlayer.GetMaxHealth())
+            {
+                return multiplier;
+            }
+            if (NoFoodLoSSMod.CheckStamina.Value && localPlayer.GetStamina() < localPlayer.GetMaxStamina())
+            {
+                return multiplier;
+            }
+            if (NoFoodLoSSMod.CheckEitr.Value && localPlayer.GetEitr() < localPlayer.GetMaxEitr())
+            {
+                return multiplier;
+            }
+            return 0f;
+        }
+        public static float RestedMultiplier()
+        {
+            if (!NoFoodLoSSMod.UseRestedBonus.Value || !Player.m_localPlayer.GetSEMan().HaveStatusEffect("Rested".GetStableHashCode()))
+            {
+                return 1f;
+            }
+            return NoFoodLoSSMod.RestedMultiplier.Value;
+        }
     }
 }
