@@ -1,11 +1,11 @@
-﻿using System;
+﻿using HarmonyLib;
+using System;
 using System.Collections.Generic;
-using System.Linq;
+using System.Reflection;
 using System.Reflection.Emit;
-using HarmonyLib;
 using UnityEngine;
 
-namespace DegradeOnMove
+namespace NoFoodLoSS
 {
     public class PatchClass
     {
@@ -25,27 +25,24 @@ namespace DegradeOnMove
             [HarmonyTranspiler]
             static IEnumerable<CodeInstruction> Transpiler(IEnumerable<CodeInstruction> instructions, ILGenerator il)
             {
+                var field = AccessTools.Field(typeof(Player), nameof(Player.m_foodUpdateTimer));
                 return new CodeMatcher(instructions)
-                    .MatchForward(
-                        useEnd: false,
-                        new CodeMatch(OpCodes.Ldarg_0),
-                        new CodeMatch(OpCodes.Ldfld, AccessTools.Field(typeof(Player), nameof(Player.m_foodUpdateTimer))),
-                        new CodeMatch(OpCodes.Ldarg_1),
-                        new CodeMatch(OpCodes.Add))
-                    .Advance(offset: 3)
+                    .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldfld, field))
+                    .MatchForward(useEnd: false, new CodeMatch(OpCodes.Ldarg_1))
+                    .Advance(1)
                     .InsertAndAdvance(Transpilers.EmitDelegate<Func<float, float>>(CheckPlayerMovementSetFood))
-                    .InstructionEnumeration(); 
+                    .InstructionEnumeration();
             }
         }
 
 
-        static float CheckPlayerMovementSetFood(float value)
+        public static float CheckPlayerMovementSetFood(float value)
         {
-            if (!DegradeOnMoveMod.UseMod.Value) return value;
-            if (Player.m_localPlayer.m_moveDir == Vector3.zero)
+            if (!NoFoodLoSSMod.UseMod.Value) return value;
+
+            if (Player.m_localPlayer.m_moveDir == Vector3.zero && Player.m_localPlayer.GetStamina() >= Player.m_localPlayer.GetMaxStamina())
             {
-                // <-- or whatever you need to check
-                return 0f; // <-- adds 0 time 
+                return 0f;
             }
 
             return value;
